@@ -216,19 +216,49 @@ header .generated {
 .day-record { font-size: 12px; margin-left: auto; font-weight: 600; }
 .day-picks { display: flex; flex-direction: column; gap: 4px; }
 
+/* ---- Props tables ---- */
+.props-table {
+    width: 100%; border-collapse: collapse; font-size: 12px;
+}
+.props-table th {
+    text-align: left; color: #6e7681; font-weight: 600;
+    padding: 5px 8px; border-bottom: 1px solid #1c2129;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.props-table td {
+    padding: 6px 8px; color: #c9d1d9; border-bottom: 1px solid #1c2129;
+}
+.props-table td.num { font-variant-numeric: tabular-nums; text-align: right; }
+.props-table .prop-player { font-weight: 600; color: #f0f6fc; white-space: nowrap; }
+.props-table .prop-team { font-weight: 400; color: #6e7681; font-size: 11px; }
+.props-table tr:hover { background: #111820; }
+.edge-good { color: #00b894; font-weight: 700; }
+.edge-neutral { color: #ffa502; font-weight: 600; }
+.edge-low { color: #6e7681; }
+.badge-today {
+    display: inline-block; background: rgba(0,184,148,0.15); color: #00b894;
+    border: 1px solid rgba(0,184,148,0.3); border-radius: 2px;
+    padding: 1px 5px; font-size: 9px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-left: 4px;
+    vertical-align: middle;
+}
+.playing-today { background: rgba(0,184,148,0.03); }
+
 /* ---- Mobile ---- */
 @media (max-width: 480px) {
     body { padding: 10px; }
     header h1 { font-size: 18px; }
     .hero-value { font-size: 22px; }
     .hero-stats { gap: 8px; }
+    .props-table { font-size: 11px; }
+    .props-table th, .props-table td { padding: 4px 5px; }
 }
 </style>
 </head>
 <body>
 <header>
     <h1>NHL Picks Dashboard</h1>
-    <span class="generated">Mar 02, 2026 11:10 AM</span>
+    <span class="generated">Mar 02, 2026 11:50 AM</span>
 </header>
 
 <div class="section">
@@ -260,6 +290,41 @@ header .generated {
 </div>
 </div>
 </div>
+
+<div class="section">
+<h2>SOS Shots on Goal Props <span class="record-subtitle">(SOS + DraftKings)</span></h2>
+<div class="card">
+<table class="props-table"><thead><tr><th>Player</th><th>Game</th><th>SOS Proj</th><th>DK Line</th><th>Odds</th><th>Model%</th><th>Implied%</th><th>Edge</th></tr></thead><tbody>
+<tr><td class="prop-player">Trevor Zegras <span class="prop-team">(PHI)</span></td><td>PHI @ TOR</td><td class="num">2.75</td><td class="num">2.5</td><td class="num">+145</td><td class="num">52%</td><td class="num">41%</td><td class="num edge-good">11.0%</td></tr>
+<tr><td class="prop-player">Trevor Zegras <span class="prop-team">(PHI)</span></td><td>PHI @ TOR</td><td class="num">2.75</td><td class="num">1.5</td><td class="num">-205</td><td class="num">76%</td><td class="num">67%</td><td class="num edge-good">8.8%</td></tr>
+<tr><td class="prop-player">Trevor Zegras <span class="prop-team">(PHI)</span></td><td>PHI @ TOR</td><td class="num">2.75</td><td class="num">3.5</td><td class="num">+370</td><td class="num">30%</td><td class="num">21%</td><td class="num edge-good">8.4%</td></tr>
+<tr><td class="prop-player">Owen Tippett <span class="prop-team">(PHI)</span></td><td>PHI @ TOR</td><td class="num">3.40</td><td class="num">2.5</td><td class="num">-142</td><td class="num">66%</td><td class="num">59%</td><td class="num edge-neutral">7.3%</td></tr>
+<tr><td class="prop-player">Kirill Marchenko <span class="prop-team">(CBJ)</span></td><td>CBJ @ NYR</td><td class="num">3.24</td><td class="num">3.5</td><td class="num">+200</td><td class="num">41%</td><td class="num">33%</td><td class="num edge-neutral">7.3%</td></tr>
+<tr><td class="prop-player">Kirill Marchenko <span class="prop-team">(CBJ)</span></td><td>CBJ @ NYR</td><td class="num">3.24</td><td class="num">2.5</td><td class="num">-125</td><td class="num">63%</td><td class="num">56%</td><td class="num edge-neutral">7.3%</td></tr>
+<tr><td class="prop-player">Owen Tippett <span class="prop-team">(PHI)</span></td><td>PHI @ TOR</td><td class="num">3.40</td><td class="num">3.5</td><td class="num">+170</td><td class="num">44%</td><td class="num">37%</td><td class="num edge-neutral">7.1%</td></tr>
+<tr><td class="prop-player">Sean Walker <span class="prop-team">(CAR)</span></td><td>CAR @ SEA</td><td class="num">2.32</td><td class="num">1.5</td><td class="num">-154</td><td class="num">67%</td><td class="num">61%</td><td class="num edge-neutral">6.7%</td></tr>
+<tr><td class="prop-player">Sean Walker <span class="prop-team">(CAR)</span></td><td>CAR @ SEA</td><td class="num">2.32</td><td class="num">2.5</td><td class="num">+190</td><td class="num">41%</td><td class="num">34%</td><td class="num edge-neutral">6.4%</td></tr>
+<tr><td class="prop-player">Kirill Marchenko <span class="prop-team">(CBJ)</span></td><td>CBJ @ NYR</td><td class="num">3.24</td><td class="num">4.5</td><td class="num">+475</td><td class="num">23%</td><td class="num">17%</td><td class="num edge-neutral">5.3%</td></tr>
+</tbody></table>
+</div>
+</div>
+
+<div class="section">
+<h2>SOS Points Props <span class="record-subtitle">(SOS + DraftKings)</span></h2>
+<div class="card">
+<table class="props-table"><thead><tr><th>Player</th><th>Game</th><th>SOS Proj</th><th>DK Line</th><th>Odds</th><th>Model%</th><th>Implied%</th><th>Edge</th></tr></thead><tbody>
+<tr><td class="prop-player">Shayne Gostisbehere <span class="prop-team">(CAR)</span></td><td>CAR @ SEA</td><td class="num">0.81</td><td class="num">0.5</td><td class="num">-110</td><td class="num">59%</td><td class="num">52%</td><td class="num edge-neutral">6.7%</td></tr>
+<tr><td class="prop-player">Cam York <span class="prop-team">(PHI)</span></td><td>PHI @ TOR</td><td class="num">0.51</td><td class="num">0.5</td><td class="num">+220</td><td class="num">37%</td><td class="num">31%</td><td class="num edge-neutral">6.0%</td></tr>
+<tr><td class="prop-player">Owen Tippett <span class="prop-team">(PHI)</span></td><td>PHI @ TOR</td><td class="num">0.78</td><td class="num">0.5</td><td class="num">+126</td><td class="num">50%</td><td class="num">44%</td><td class="num edge-neutral">5.9%</td></tr>
+<tr><td class="prop-player">Boone Jenner <span class="prop-team">(CBJ)</span></td><td>CBJ @ NYR</td><td class="num">0.67</td><td class="num">0.5</td><td class="num">+140</td><td class="num">47%</td><td class="num">42%</td><td class="num edge-neutral">5.7%</td></tr>
+<tr><td class="prop-player">Michael Bunting <span class="prop-team">(NSH)</span></td><td>DET @ NSH</td><td class="num">0.45</td><td class="num">0.5</td><td class="num">+185</td><td class="num">39%</td><td class="num">35%</td><td class="num edge-low">3.5%</td></tr>
+<tr><td class="prop-player">Shayne Gostisbehere <span class="prop-team">(CAR)</span></td><td>CAR @ SEA</td><td class="num">0.81</td><td class="num">1.5</td><td class="num">+425</td><td class="num">22%</td><td class="num">19%</td><td class="num edge-low">3.5%</td></tr>
+<tr><td class="prop-player">Brent Burns <span class="prop-team">(COL)</span></td><td>COL @ LAK</td><td class="num">0.45</td><td class="num">0.5</td><td class="num">+200</td><td class="num">37%</td><td class="num">33%</td><td class="num edge-low">3.4%</td></tr>
+<tr><td class="prop-player">Luke Evangelista <span class="prop-team">(NSH)</span></td><td>DET @ NSH</td><td class="num">0.71</td><td class="num">0.5</td><td class="num">+105</td><td class="num">52%</td><td class="num">49%</td><td class="num edge-low">3.2%</td></tr>
+</tbody></table>
+</div>
+</div>
+
 
 <div class="section">
 <h2>Cumulative Profit <span class="record-subtitle">(1u per pick, spreads/totals at -110)</span></h2>

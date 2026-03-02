@@ -14,6 +14,7 @@ from collections import defaultdict
 PROJECT_DIR = Path(__file__).parent
 DATA_DIR = PROJECT_DIR / "data"
 NHL_PICKS_FILE = Path("/Users/mac/nhl-betting-automation/predictions_history.json")
+PROPS_DASHBOARD_FILE = Path("/Users/mac/nhl-betting-automation/props_dashboard_data.json")
 OUTPUT_FILE = PROJECT_DIR / "docs" / "index.html"
 
 NHL_TOP_PICK_THRESHOLD = 4  # Only show bet types with this many stars or more
@@ -100,6 +101,19 @@ def load_nhl_picks() -> list:
         filtered.append(pick)
 
     return filtered
+
+
+def load_props_data() -> dict:
+    """Load props dashboard data from sos_scraper output.
+    Returns empty dict if file doesn't exist (sections just won't render).
+    """
+    if not PROPS_DASHBOARD_FILE.exists():
+        return {}
+    try:
+        with open(PROPS_DASHBOARD_FILE) as f:
+            return json.load(f)
+    except (json.JSONDecodeError, IOError):
+        return {}
 
 
 def compute_nhl_stats(picks: list) -> dict:
@@ -591,10 +605,175 @@ def build_daily_section(nhl_by_date: dict) -> str:
 
 
 # =============================================================================
+# PROPS SECTIONS
+# =============================================================================
+
+def _edge_class(edge: float) -> str:
+    """Return CSS class based on edge value."""
+    if edge >= 0.08:
+        return "edge-good"
+    elif edge >= 0.04:
+        return "edge-neutral"
+    return "edge-low"
+
+
+def _format_odds(odds) -> str:
+    """Format American odds with + prefix for positive."""
+    if odds is None:
+        return "--"
+    return f"{odds:+d}" if isinstance(odds, (int, float)) else str(odds)
+
+
+def _format_pct(val) -> str:
+    """Format a probability as percentage."""
+    if val is None:
+        return "--"
+    return f"{val:.0%}" if val < 1 else f"{val:.1f}%"
+
+
+def build_sog_props_section(props_data: dict) -> str:
+    """Build SOG (Shots on Goal) props table section."""
+    sog_props = props_data.get("top_sog_props", [])
+    if not sog_props:
+        return ""
+
+    html = '<div class="section">\n'
+    html += '<h2>SOS Shots on Goal Props <span class="record-subtitle">(SOS + DraftKings)</span></h2>\n'
+    html += '<div class="card">\n'
+    html += '<table class="props-table"><thead><tr>'
+    html += '<th>Player</th><th>Game</th><th>SOS Proj</th><th>DK Line</th>'
+    html += '<th>Odds</th><th>Model%</th><th>Implied%</th><th>Edge</th>'
+    html += '</tr></thead><tbody>\n'
+
+    for p in sog_props[:10]:
+        edge_cls = _edge_class(p.get("edge", 0))
+        html += f'<tr>'
+        html += f'<td class="prop-player">{p.get("player", "")}'
+        if p.get("team"):
+            html += f' <span class="prop-team">({p["team"]})</span>'
+        html += f'</td>'
+        html += f'<td>{p.get("game", "")}</td>'
+        html += f'<td class="num">{p.get("sos_proj", 0):.2f}</td>'
+        html += f'<td class="num">{p.get("dk_line", "")}</td>'
+        html += f'<td class="num">{_format_odds(p.get("dk_odds"))}</td>'
+        html += f'<td class="num">{_format_pct(p.get("model_prob"))}</td>'
+        html += f'<td class="num">{_format_pct(p.get("implied_prob"))}</td>'
+        html += f'<td class="num {edge_cls}">{p.get("edge", 0):.1%}</td>'
+        html += f'</tr>\n'
+
+    html += '</tbody></table>\n'
+    html += '</div>\n</div>\n'
+    return html
+
+
+def build_points_props_section(props_data: dict) -> str:
+    """Build Points props table section."""
+    pts_props = props_data.get("top_points_props", [])
+    if not pts_props:
+        return ""
+
+    html = '<div class="section">\n'
+    html += '<h2>SOS Points Props <span class="record-subtitle">(SOS + DraftKings)</span></h2>\n'
+    html += '<div class="card">\n'
+    html += '<table class="props-table"><thead><tr>'
+    html += '<th>Player</th><th>Game</th><th>SOS Proj</th><th>DK Line</th>'
+    html += '<th>Odds</th><th>Model%</th><th>Implied%</th><th>Edge</th>'
+    html += '</tr></thead><tbody>\n'
+
+    for p in pts_props[:10]:
+        edge_cls = _edge_class(p.get("edge", 0))
+        html += f'<tr>'
+        html += f'<td class="prop-player">{p.get("player", "")}'
+        if p.get("team"):
+            html += f' <span class="prop-team">({p["team"]})</span>'
+        html += f'</td>'
+        html += f'<td>{p.get("game", "")}</td>'
+        html += f'<td class="num">{p.get("sos_proj", 0):.2f}</td>'
+        html += f'<td class="num">{p.get("dk_line", "")}</td>'
+        html += f'<td class="num">{_format_odds(p.get("dk_odds"))}</td>'
+        html += f'<td class="num">{_format_pct(p.get("model_prob"))}</td>'
+        html += f'<td class="num">{_format_pct(p.get("implied_prob"))}</td>'
+        html += f'<td class="num {edge_cls}">{p.get("edge", 0):.1%}</td>'
+        html += f'</tr>\n'
+
+    html += '</tbody></table>\n'
+    html += '</div>\n</div>\n'
+    return html
+
+
+def build_hit_rate_section(props_data: dict) -> str:
+    """Build hit rate tracking section showing historically profitable props."""
+    hit_rate_props = props_data.get("hit_rate_props", [])
+    if not hit_rate_props:
+        return ""
+
+    today = date.today().isoformat()
+
+    html = '<div class="section">\n'
+    html += '<h2>Profitable Props Tracker <span class="record-subtitle">(historical hit rates)</span></h2>\n'
+    html += '<div class="card">\n'
+    html += '<table class="props-table"><thead><tr>'
+    html += '<th>Player</th><th>Market + Line</th><th>Record</th><th>Hit Rate</th>'
+    html += '<th>Implied</th><th>Edge</th><th>ROI%</th><th>Streak</th>'
+    html += '</tr></thead><tbody>\n'
+
+    for p in hit_rate_props[:15]:
+        stat_label = p.get("stat", "").upper()
+        if stat_label == "SOG":
+            stat_label = "Shots"
+        side_label = p.get("side", "over").upper()
+        market_line = f"{side_label} {p.get('dk_line', '')} {stat_label}"
+
+        hit_rate = p.get("hit_rate", 0)
+        avg_implied = p.get("avg_implied", 0)
+        edge_vs = p.get("edge_vs_implied", 0)
+        roi = p.get("roi_pct", 0)
+        streak = p.get("streak", 0)
+        attempts = p.get("attempts", 0)
+        hits = p.get("hits", 0)
+
+        # Determine if player is playing today (check last_game field)
+        is_today = p.get("last_date", "") == today
+        row_cls = ' class="playing-today"' if is_today else ""
+
+        # Edge class
+        edge_cls = "edge-good" if edge_vs >= 0.05 else "edge-neutral"
+        roi_cls = "win" if roi > 0 else ("loss" if roi < 0 else "")
+
+        # Streak display
+        if streak > 0:
+            streak_str = f'<span class="win">{streak}W</span>'
+        elif streak < 0:
+            streak_str = f'<span class="loss">{abs(streak)}L</span>'
+        else:
+            streak_str = "--"
+
+        html += f'<tr{row_cls}>'
+        html += f'<td class="prop-player">{p.get("player", "")}'
+        if p.get("team"):
+            html += f' <span class="prop-team">({p["team"]})</span>'
+        if is_today:
+            html += ' <span class="badge-today">LIVE</span>'
+        html += f'</td>'
+        html += f'<td>{market_line}</td>'
+        html += f'<td class="num">{hits}-{attempts - hits}</td>'
+        html += f'<td class="num">{hit_rate:.0%}</td>'
+        html += f'<td class="num">{avg_implied:.0%}</td>'
+        html += f'<td class="num {edge_cls}">{edge_vs:.1%}</td>'
+        html += f'<td class="num {roi_cls}">{roi:+.1f}%</td>'
+        html += f'<td class="num">{streak_str}</td>'
+        html += f'</tr>\n'
+
+    html += '</tbody></table>\n'
+    html += '</div>\n</div>\n'
+    return html
+
+
+# =============================================================================
 # MAIN HTML GENERATION
 # =============================================================================
 
-def generate_html(nhl_picks: list) -> str:
+def generate_html(nhl_picks: list, props_data: dict = None) -> str:
     nhl_stats = compute_nhl_stats(nhl_picks)
     nhl_by_date = group_by_date(nhl_picks)
     locked = load_locked_dates()
@@ -819,12 +998,42 @@ header .generated {{
 .day-record {{ font-size: 12px; margin-left: auto; font-weight: 600; }}
 .day-picks {{ display: flex; flex-direction: column; gap: 4px; }}
 
+/* ---- Props tables ---- */
+.props-table {{
+    width: 100%; border-collapse: collapse; font-size: 12px;
+}}
+.props-table th {{
+    text-align: left; color: #6e7681; font-weight: 600;
+    padding: 5px 8px; border-bottom: 1px solid #1c2129;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+}}
+.props-table td {{
+    padding: 6px 8px; color: #c9d1d9; border-bottom: 1px solid #1c2129;
+}}
+.props-table td.num {{ font-variant-numeric: tabular-nums; text-align: right; }}
+.props-table .prop-player {{ font-weight: 600; color: #f0f6fc; white-space: nowrap; }}
+.props-table .prop-team {{ font-weight: 400; color: #6e7681; font-size: 11px; }}
+.props-table tr:hover {{ background: #111820; }}
+.edge-good {{ color: #00b894; font-weight: 700; }}
+.edge-neutral {{ color: #ffa502; font-weight: 600; }}
+.edge-low {{ color: #6e7681; }}
+.badge-today {{
+    display: inline-block; background: rgba(0,184,148,0.15); color: #00b894;
+    border: 1px solid rgba(0,184,148,0.3); border-radius: 2px;
+    padding: 1px 5px; font-size: 9px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-left: 4px;
+    vertical-align: middle;
+}}
+.playing-today {{ background: rgba(0,184,148,0.03); }}
+
 /* ---- Mobile ---- */
 @media (max-width: 480px) {{
     body {{ padding: 10px; }}
     header h1 {{ font-size: 18px; }}
     .hero-value {{ font-size: 22px; }}
     .hero-stats {{ gap: 8px; }}
+    .props-table {{ font-size: 11px; }}
+    .props-table th, .props-table td {{ padding: 4px 5px; }}
 }}
 </style>
 </head>
@@ -836,6 +1045,9 @@ header .generated {{
 
 {build_today_section(nhl_by_date, locked)}
 {build_record_section(nhl_stats, nhl_picks)}
+{build_sog_props_section(props_data) if props_data else ""}
+{build_points_props_section(props_data) if props_data else ""}
+{build_hit_rate_section(props_data) if props_data else ""}
 {build_chart_section(nhl_picks)}
 {build_tier_section(nhl_picks)}
 {build_daily_section(nhl_by_date)}
@@ -874,7 +1086,16 @@ def main():
     nhl_picks = load_nhl_picks()
     print(f"Dashboard: {len(nhl_picks)} NHL top picks loaded (4+ stars)")
 
-    html = generate_html(nhl_picks)
+    props_data = load_props_data()
+    if props_data:
+        sog_count = len(props_data.get("top_sog_props", []))
+        pts_count = len(props_data.get("top_points_props", []))
+        hr_count = len(props_data.get("hit_rate_props", []))
+        print(f"Dashboard: Props data loaded ({sog_count} SOG, {pts_count} Points, {hr_count} hit rate)")
+    else:
+        print("Dashboard: No props data found (props sections will be skipped)")
+
+    html = generate_html(nhl_picks, props_data)
 
     OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
     with open(OUTPUT_FILE, "w") as f:
